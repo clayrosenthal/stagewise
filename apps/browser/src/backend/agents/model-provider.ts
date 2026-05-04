@@ -160,7 +160,8 @@ export class ModelProviderService {
       endpointId === 'moonshotai' ||
       endpointId === 'alibaba' ||
       endpointId === 'deepseek' ||
-      endpointId === 'z-ai'
+      endpointId === 'z-ai' ||
+      endpointId === 'minimax'
     ) {
       const { apiKey, baseURL } = this.resolveProviderEndpoint(endpointId);
       const apiSpecMap: Record<ModelProvider, ApiSpec> = {
@@ -171,6 +172,7 @@ export class ModelProviderService {
         alibaba: 'openai-chat-completions',
         deepseek: 'openai-chat-completions',
         'z-ai': 'openai-chat-completions',
+        minimax: 'openai-chat-completions',
       };
       return { apiKey, baseURL, apiSpec: apiSpecMap[endpointId] };
     }
@@ -483,6 +485,24 @@ export class ModelProviderService {
         return {
           model: this.telemetryService.withTracing(
             // Z.AI's OpenAI-compatible endpoint speaks Chat Completions.
+            p.chat(modelId as any),
+            posthogConfig,
+          ),
+          headers,
+          providerOptions: providerOptions as Parameters<
+            typeof streamText
+          >[0]['providerOptions'],
+          contextWindowSize,
+        };
+      }
+      case 'minimax': {
+        const p = createOpenAI({
+          apiKey,
+          baseURL: baseURL ?? 'https://api.minimax.io/v1',
+        });
+        return {
+          model: this.telemetryService.withTracing(
+            // MiniMax's OpenAI-compatible endpoint speaks Chat Completions.
             p.chat(modelId as any),
             posthogConfig,
           ),
